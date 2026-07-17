@@ -4,6 +4,11 @@ Kitap kapağından esinlenen, tarayıcıda oynayan yaklaşık 50 saniyelik paste
 tarzında bir kısa animasyon film. Harici hiçbir kütüphane gerektirmez; tek bir
 HTML dosyasından oluşur (SVG + CSS animasyonları + hafif JavaScript zamanlayıcı).
 
+## Hazır video
+
+Tarayıcı açmadan izlemek için `rumeysa-film.mp4` dosyası da mevcut
+(720x1080, 30 fps, ~53 saniye).
+
 ## Nasıl izlenir?
 
 `index.html` dosyasını herhangi bir modern tarayıcıda açın ve
