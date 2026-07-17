@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rümeysa Okuma Yazma Öğreniyor — Kısa Animasyon Film</title>
+<style>
+  :root{
+    --paper:#f7e9b5;
+    --red:#e94f4f;
+    --orange:#f0913a;
+    --blue:#4a90d9;
+    --green:#5cb85c;
+    --purple:#9b59b6;
+    --pink:#e87ab0;
+    --brown:#5a3a2a;
+    --skin:#f6d3ae;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    background:#3b2f2f;
+    font-family:"Comic Sans MS","Chalkboard SE","Segoe Print",cursive,sans-serif;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+  }
+
+  /* ---------- sahne (film perdesi) ---------- */
+  #film{
+    position:relative;
+    width:min(96vw, calc(96vh * 2 / 3));
+    aspect-ratio:2/3;
+    max-height:96vh;
+    background:
+      radial-gradient(circle at 30% 20%, #fdf3c9 0%, transparent 55%),
+      radial-gradient(circle at 75% 80%, #f3dfa0 0%, transparent 50%),
+      var(--paper);
+    border-radius:18px;
+    box-shadow:0 20px 60px rgba(0,0,0,.55);
+    overflow:hidden;
+  }
+  /* pastel boya kağıt dokusu */
+  #film::after{
+    content:"";position:absolute;inset:0;pointer-events:none;z-index:50;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .06 0'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+    mix-blend-mode:multiply;
+  }
+
+  .scene{
+    position:absolute;inset:0;
+    opacity:0;visibility:hidden;
+    transition:opacity 1s ease;
+  }
+  .scene.active{opacity:1;visibility:visible}
+  .scene svg{position:absolute;inset:0;width:100%;height:100%}
+  /* Dönen/ölçeklenen SVG öğeleri kendi kutularının merkezini baz alsın
+     (varsayılan view-box olduğundan öğeler tuval merkezi etrafında yörüngeye girer) */
+  .s1-sun,.s1-title,.letter,.heart,.duo,.flyletter,.bookstar,
+  .pencil,.bloom,.sonbadge,.s5-title,.sparkle,.confetti{transform-box:fill-box}
+
+  /* ---------- alt yazı ---------- */
+  #subtitle{
+    position:absolute;left:50%;bottom:4%;transform:translateX(-50%);
+    z-index:60;width:88%;text-align:center;
+    background:rgba(255,255,255,.85);
+    border:3px dashed var(--orange);
+    border-radius:16px;
+    padding:.55em .8em;
+    font-size:clamp(13px,2.6vmin,22px);
+    color:#4a3520;font-weight:bold;
+    opacity:0;transition:opacity .5s ease;
+  }
+  #subtitle.show{opacity:1}
+
+  /* ---------- başlat / tekrar ekranı ---------- */
+  #overlay{
+    position:absolute;inset:0;z-index:100;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2em;
+    background:rgba(60,40,20,.45);backdrop-filter:blur(2px);
+    transition:opacity .6s ease;
+  }
+  #overlay.hidden{opacity:0;pointer-events:none}
+  #overlay h1{
+    color:#fff;text-align:center;line-height:1.25;
+    font-size:clamp(20px,4.5vmin,38px);
+    text-shadow:2px 3px 0 rgba(0,0,0,.35);
+    padding:0 .6em;
+  }
+  #overlay h1 .c1{color:#ffd166}#overlay h1 .c2{color:#8fd3ff}#overlay h1 .c3{color:#b5e48c}
+  #playBtn{
+    font-family:inherit;font-weight:bold;
+    font-size:clamp(16px,3.4vmin,28px);
+    padding:.55em 1.6em;border:none;border-radius:999px;cursor:pointer;
+    color:#fff;background:linear-gradient(180deg,var(--orange),var(--red));
+    box-shadow:0 6px 0 #b23a3a, 0 12px 25px rgba(0,0,0,.35);
+    transition:transform .15s ease;
+  }
+  #playBtn:hover{transform:scale(1.06)}
+  #playBtn:active{transform:translateY(4px)}
+
+  /* =========================================================
+     SAHNE 1 — Gün doğumu ve film adı
+     ========================================================= */
+  .s1-sun{transform-origin:center;animation:none}
+  .active .s1-sun{animation:sunrise 3.5s ease-out forwards, sunspin 14s linear 3.5s infinite}
+  @keyframes sunrise{from{transform:translateY(38%) scale(.6)}to{transform:translateY(0) scale(1)}}
+  @keyframes sunspin{from{rotate:0deg}to{rotate:360deg}}
+  .s1-sunface{opacity:0}
+  .active .s1-sunface{animation:fadein 1s ease 3s forwards}
+
+  .cloud{animation:none}
+  .active .cloud-a{animation:drift 26s linear infinite}
+  .active .cloud-b{animation:drift 34s linear 6s infinite}
+  @keyframes drift{
+    0%{transform:translateX(-35%)}
+    100%{transform:translateX(135%)}
+  }
+
+  .s1-title{opacity:0;transform-origin:center}
+  .active .s1-title{animation:popin .9s cubic-bezier(.2,1.6,.4,1) forwards}
+  .active .s1-t1{animation-delay:1.2s}
+  .active .s1-t2{animation-delay:1.9s}
+  .active .s1-t3{animation-delay:2.6s}
+  @keyframes popin{
+    0%{opacity:0;transform:scale(.2) rotate(-6deg)}
+    100%{opacity:1;transform:scale(1) rotate(0)}
+  }
+  @keyframes fadein{to{opacity:1}}
+
+  .bird{opacity:0}
+  .active .bird{animation:fly 9s ease-in-out 4s infinite}
+  @keyframes fly{
+    0%{opacity:0;transform:translate(-10%,4%)}
+    10%{opacity:1}
+    90%{opacity:1}
+    100%{opacity:0;transform:translate(110%,-6%)}
+  }
+
+  /* =========================================================
+     SAHNE 2 — Anne ve Rümeysa, harfler
+     ========================================================= */
+  .duo{transform-origin:50% 90%}
+  .active .duo{animation:sway 4s ease-in-out infinite}
+  @keyframes sway{0%,100%{transform:rotate(-1.6deg)}50%{transform:rotate(1.6deg)}}
+
+  .letter{opacity:0;transform-origin:center}
+  .active .letter{animation:letterpop .8s cubic-bezier(.2,1.8,.4,1) forwards, bob 3s ease-in-out 1s infinite}
+  .active .l1{animation-delay:.6s,1.4s}
+  .active .l2{animation-delay:1.1s,1.9s}
+  .active .l3{animation-delay:1.6s,2.4s}
+  .active .l4{animation-delay:2.1s,2.9s}
+  .active .l5{animation-delay:2.6s,3.4s}
+  @keyframes letterpop{
+    0%{opacity:0;transform:scale(0) rotate(-25deg)}
+    100%{opacity:1;transform:scale(1) rotate(0)}
+  }
+  @keyframes bob{0%,100%{translate:0 0}50%{translate:0 -12px}}
+
+  .heart{opacity:0;transform-origin:center}
+  .active .heart{animation:floatup 4s ease-in 2.5s infinite}
+  @keyframes floatup{
+    0%{opacity:0;transform:translateY(0) scale(.6)}
+    20%{opacity:1}
+    100%{opacity:0;transform:translateY(-140px) scale(1.1)}
+  }
+
+  /* =========================================================
+     SAHNE 3 — Harfler kitaba uçuyor
+     ========================================================= */
+  .flyletter{opacity:0;offset-rotate:0deg}
+  .active .fl1{animation:flypath1 2.6s ease-in-out .4s forwards}
+  .active .fl2{animation:flypath2 2.6s ease-in-out 1.2s forwards}
+  .active .fl3{animation:flypath3 2.6s ease-in-out 2.0s forwards}
+  @keyframes flypath1{
+    0%{opacity:0;transform:translate(-120px,-260px) scale(1.4) rotate(-30deg)}
+    15%{opacity:1}
+    100%{opacity:0;transform:translate(0,0) scale(.4) rotate(10deg)}
+  }
+  @keyframes flypath2{
+    0%{opacity:0;transform:translate(150px,-300px) scale(1.4) rotate(25deg)}
+    15%{opacity:1}
+    100%{opacity:0;transform:translate(0,0) scale(.4) rotate(-10deg)}
+  }
+  @keyframes flypath3{
+    0%{opacity:0;transform:translate(0,-330px) scale(1.5) rotate(0)}
+    15%{opacity:1}
+    100%{opacity:0;transform:translate(0,0) scale(.4) rotate(20deg)}
+  }
+  .bookstar{opacity:0;transform-origin:center}
+  .active .bookstar{animation:twinkle 1.2s ease 3s infinite alternate}
+  @keyframes twinkle{from{opacity:.25;transform:scale(.85)}to{opacity:1;transform:scale(1.1)}}
+  .active .book-glow{animation:glowpulse 2.5s ease-in-out 2.8s infinite}
+  .book-glow{opacity:0}
+  @keyframes glowpulse{0%,100%{opacity:.15}50%{opacity:.5}}
+
+  /* =========================================================
+     SAHNE 4 — Kalem "Rümeysa" yazıyor
+     ========================================================= */
+  .pencil{transform-origin:20% 85%}
+  .active .pencil{animation:writealong 6.5s ease-in-out .5s forwards}
+  @keyframes writealong{
+    0%{transform:translateX(0) rotate(0deg)}
+    8%{transform:translateX(0) rotate(-6deg)}
+    100%{transform:translateX(340px) rotate(-6deg)}
+  }
+  .wletter{opacity:0}
+  .active .w1{animation:inkin .3s ease  1.0s forwards}
+  .active .w2{animation:inkin .3s ease  1.9s forwards}
+  .active .w3{animation:inkin .3s ease  2.8s forwards}
+  .active .w4{animation:inkin .3s ease  3.7s forwards}
+  .active .w5{animation:inkin .3s ease  4.6s forwards}
+  .active .w6{animation:inkin .3s ease  5.5s forwards}
+  .active .w7{animation:inkin .3s ease  6.4s forwards}
+  @keyframes inkin{from{opacity:0;translate:0 8px}to{opacity:1;translate:0 0}}
+  .sparkle{opacity:0;transform-origin:center}
+  .active .sparkle{animation:twinkle .9s ease 7s infinite alternate}
+
+  /* =========================================================
+     SAHNE 5 — Kutlama, çiçekler ve SON
+     ========================================================= */
+  .bloom{transform-origin:50% 100%;transform:scale(0)}
+  .active .bloom{animation:bloomup 1.1s cubic-bezier(.2,1.5,.4,1) forwards}
+  .active .b1{animation-delay:.3s}
+  .active .b2{animation-delay:.7s}
+  .active .b3{animation-delay:1.1s}
+  .active .b4{animation-delay:1.5s}
+  @keyframes bloomup{to{transform:scale(1)}}
+
+  .confetti{opacity:0}
+  .active .confetti{animation:confall 3.4s linear infinite}
+  .active .c-d1{animation-delay:1.6s}
+  .active .c-d2{animation-delay:2.1s}
+  .active .c-d3{animation-delay:2.6s}
+  .active .c-d4{animation-delay:3.0s}
+  @keyframes confall{
+    0%{opacity:0;transform:translateY(-50px) rotate(0deg)}
+    10%{opacity:1}
+    100%{opacity:.9;transform:translateY(660px) rotate(300deg)}
+  }
+
+  .sonbadge{opacity:0;transform-origin:center}
+  .active .sonbadge{animation:popin 1s cubic-bezier(.2,1.6,.4,1) 2.2s forwards}
+  .s5-title{opacity:0;transform-origin:center}
+  .active .s5-title{animation:popin .9s cubic-bezier(.2,1.6,.4,1) .5s forwards}
+
+  text{user-select:none}
+</style>
+</head>
+<body>
+
+<div id="film">
+
+  <!-- ================= SAHNE 1 : Gün doğumu ================= -->
+  <section class="scene" id="scene1">
+    <svg viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <!-- gökyüzü -->
+      <rect width="400" height="600" fill="#fdeeb0"/>
+      <rect y="470" width="400" height="130" fill="#cfe6a2"/>
+      <ellipse cx="90"  cy="480" rx="150" ry="45" fill="#bcdc8e"/>
+      <ellipse cx="330" cy="490" rx="160" ry="50" fill="#c6e29a"/>
+
+      <!-- güneş -->
+      <g transform="translate(200,150)">
+        <g class="s1-sun">
+          <g stroke="#f2a83b" stroke-width="9" stroke-linecap="round">
+            <line x1="0" y1="-78" x2="0" y2="-102"/><line x1="0" y1="78" x2="0" y2="102"/>
+            <line x1="-78" y1="0" x2="-102" y2="0"/><line x1="78" y1="0" x2="102" y2="0"/>
+            <line x1="-56" y1="-56" x2="-73" y2="-73"/><line x1="56" y1="56" x2="73" y2="73"/>
+            <line x1="-56" y1="56" x2="-73" y2="73"/><line x1="56" y1="-56" x2="73" y2="-73"/>
+          </g>
+          <circle r="62" fill="#f9c74f" stroke="#f0913a" stroke-width="5"/>
+        </g>
+        <g class="s1-sunface">
+          <circle cx="-20" cy="-10" r="7" fill="#5a3a2a"/>
+          <circle cx="20"  cy="-10" r="7" fill="#5a3a2a"/>
+          <path d="M -24 16 Q 0 38 24 16" fill="none" stroke="#5a3a2a" stroke-width="6" stroke-linecap="round"/>
+          <circle cx="-34" cy="8" r="8" fill="#f4978e" opacity=".7"/>
+          <circle cx="34"  cy="8" r="8" fill="#f4978e" opacity=".7"/>
+        </g>
+      </g>
+
+      <!-- bulutlar -->
+      <g class="cloud cloud-a" fill="#ffffff" stroke="#bcd7ee" stroke-width="4">
+        <g transform="translate(0,70)">
+          <ellipse cx="60" cy="20" rx="42" ry="22"/>
+          <ellipse cx="95" cy="8"  rx="34" ry="20"/>
+          <ellipse cx="125" cy="24" rx="36" ry="18"/>
+        </g>
+      </g>
+      <g class="cloud cloud-b" fill="#ffffff" stroke="#bcd7ee" stroke-width="4">
+        <g transform="translate(-40,260)">
+          <ellipse cx="60" cy="20" rx="38" ry="20"/>
+          <ellipse cx="92" cy="8"  rx="30" ry="18"/>
+          <ellipse cx="118" cy="22" rx="32" ry="16"/>
+        </g>
+      </g>
+
+      <!-- kuş -->
+      <g class="bird" stroke="#7a5230" stroke-width="5" stroke-linecap="round" fill="none">
+        <g transform="translate(30,200)">
+          <path d="M 0 0 Q 12 -14 24 0"/>
+          <path d="M 24 0 Q 36 -14 48 0"/>
+        </g>
+      </g>
+
+      <!-- film adı -->
+      <g text-anchor="middle" font-weight="bold" font-family="inherit"
+         stroke="#ffffff" stroke-width="7" paint-order="stroke" stroke-linejoin="round">
+        <text class="s1-title s1-t1" x="200" y="330" font-size="52" fill="#e94f4f">Rümeysa</text>
+        <text class="s1-title s1-t2" x="200" y="392" font-size="40" fill="#4a90d9">Okuma Yazma</text>
+        <text class="s1-title s1-t3" x="200" y="448" font-size="40" fill="#9b59b6">Öğreniyor</text>
+      </g>
+    </svg>
+  </section>
+
+  <!-- ================= SAHNE 2 : Anne ve Rümeysa ================= -->
+  <section class="scene" id="scene2">
+    <svg viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <rect width="400" height="600" fill="#fdeeb0"/>
+      <rect y="440" width="400" height="160" fill="#cfe6a2"/>
+      <ellipse cx="80"  cy="450" rx="150" ry="45" fill="#bcdc8e"/>
+      <ellipse cx="340" cy="460" rx="160" ry="50" fill="#c6e29a"/>
+      <circle cx="60" cy="70" r="38" fill="#f9c74f" stroke="#f0913a" stroke-width="4"/>
+
+      <!-- anne ve bebek -->
+      <g class="duo" transform="translate(0,0)">
+        <!-- annenin saçı (arka) -->
+        <path d="M 200 130
+                 C 140 130 120 190 128 250
+                 C 118 300 128 350 148 380
+                 C 160 396 176 388 172 360
+                 C 236 400 300 380 300 300
+                 C 316 240 296 150 240 132 Z"
+              fill="#4a2c1d"/>
+        <path d="M 292 200 C 310 240 306 300 288 340 C 306 350 318 320 316 270 C 314 232 304 206 292 200 Z" fill="#3a2115"/>
+        <!-- anne yüzü -->
+        <ellipse cx="212" cy="200" rx="52" ry="56" fill="var(--skin)"/>
+        <path d="M 165 175 Q 212 130 262 178 Q 250 150 212 148 Q 176 150 165 175 Z" fill="#4a2c1d"/>
+        <circle cx="192" cy="200" r="7" fill="#3a2115"/>
+        <circle cx="234" cy="200" r="7" fill="#3a2115"/>
+        <circle cx="194.5" cy="197.5" r="2.4" fill="#fff"/>
+        <circle cx="236.5" cy="197.5" r="2.4" fill="#fff"/>
+        <path d="M 183 186 Q 192 180 201 186" fill="none" stroke="#3a2115" stroke-width="3" stroke-linecap="round"/>
+        <path d="M 225 186 Q 234 180 243 186" fill="none" stroke="#3a2115" stroke-width="3" stroke-linecap="round"/>
+        <path d="M 198 238 Q 213 252 230 236" fill="none" stroke="#c96a5a" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="176" cy="222" r="9" fill="#f4978e" opacity=".55"/>
+        <circle cx="250" cy="222" r="9" fill="#f4978e" opacity=".55"/>
+        <!-- boyun + kolye -->
+        <rect x="200" y="250" width="26" height="20" fill="var(--skin)"/>
+        <path d="M 196 268 Q 213 282 230 268" fill="none" stroke="#cfd8dc" stroke-width="4" stroke-dasharray="1 5" stroke-linecap="round"/>
+        <!-- elbise -->
+        <path d="M 176 276
+                 C 168 320 160 420 168 500
+                 Q 214 516 260 500
+                 C 270 420 262 320 252 276
+                 Q 214 262 176 276 Z"
+              fill="#bfe3f2" stroke="#93c7de" stroke-width="4"/>
+        <!-- annenin kolları bebeği sarıyor -->
+        <path d="M 176 286 C 130 300 118 340 142 362 L 190 380 L 196 350 Z" fill="var(--skin)" stroke="#e4b98f" stroke-width="3"/>
+        <path d="M 252 286 C 292 302 296 344 268 362 L 220 378 L 218 348 Z" fill="var(--skin)" stroke="#e4b98f" stroke-width="3"/>
+
+        <!-- bebek Rümeysa -->
+        <g transform="translate(150,268) scale(.92)">
+          <ellipse cx="46" cy="86" rx="42" ry="48" fill="#ffffff" stroke="#e8e0cf" stroke-width="3"/>
+          <circle cx="46" cy="26" r="34" fill="var(--skin)"/>
+          <path d="M 16 16 Q 46 -12 76 16 Q 66 2 46 2 Q 27 2 16 16 Z" fill="#e8c48f"/>
+          <!-- saç tokası çiçek -->
+          <g transform="translate(22,-2)">
+            <circle r="6" fill="#fff"/><circle cx="9" r="6" fill="#fff"/><circle cx="4.5" cy="-7" r="6" fill="#fff"/>
+            <circle cx="4.5" cy="-2" r="4" fill="#f9c74f"/>
+          </g>
+          <circle cx="34" cy="26" r="5.5" fill="#3a2115"/>
+          <circle cx="58" cy="26" r="5.5" fill="#3a2115"/>
+          <circle cx="36" cy="24" r="2" fill="#fff"/>
+          <circle cx="60" cy="24" r="2" fill="#fff"/>
+          <path d="M 36 42 Q 46 52 56 42" fill="none" stroke="#c96a5a" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="24" cy="36" r="6" fill="#f4978e" opacity=".6"/>
+          <circle cx="68" cy="36" r="6" fill="#f4978e" opacity=".6"/>
+          <!-- minik el -->
+          <circle cx="76" cy="76" r="11" fill="var(--skin)"/>
+          <!-- patikler -->
+          <ellipse cx="28" cy="132" rx="13" ry="9" fill="#fff" stroke="#d8cfbc" stroke-width="3"/>
+          <ellipse cx="62" cy="132" rx="13" ry="9" fill="#fff" stroke="#d8cfbc" stroke-width="3"/>
+        </g>
+      </g>
+
+      <!-- uçuşan kalpler -->
+      <g class="heart">
+        <path transform="translate(120,300) scale(1.1)" d="M0 6 C -8 -6 -22 2 -11 14 L 0 24 L 11 14 C 22 2 8 -6 0 6 Z" fill="#e87ab0"/>
+      </g>
+      <g class="heart" style="animation-delay:3.6s">
+        <path transform="translate(300,320) scale(.8)" d="M0 6 C -8 -6 -22 2 -11 14 L 0 24 L 11 14 C 22 2 8 -6 0 6 Z" fill="#e94f4f"/>
+      </g>
+
+      <!-- harfler -->
+      <g text-anchor="middle" font-weight="bold" font-family="inherit"
+         stroke="#ffffff" stroke-width="6" paint-order="stroke" stroke-linejoin="round">
+        <text class="letter l1" x="70"  y="130" font-size="58" fill="#e94f4f">A</text>
+        <text class="letter l2" x="338" y="120" font-size="58" fill="#4a90d9">B</text>
+        <text class="letter l3" x="52"  y="330" font-size="56" fill="#5cb85c">C</text>
+        <text class="letter l4" x="352" y="300" font-size="56" fill="#9b59b6">Ç</text>
+        <text class="letter l5" x="340" y="430" font-size="56" fill="#f0913a">Ğ</text>
+      </g>
+    </svg>
+  </section>
+
+  <!-- ================= SAHNE 3 : Harfler kitaba konuyor ================= -->
+  <section class="scene" id="scene3">
+    <svg viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <rect width="400" height="600" fill="#fdeeb0"/>
+      <rect y="470" width="400" height="130" fill="#cfe6a2"/>
+
+      <circle class="book-glow" cx="200" cy="400" r="150" fill="#ffe38a"/>
+
+      <!-- açık kitap -->
+      <g transform="translate(200,410)">
+        <path d="M -150 -10 C -150 -70 -60 -86 0 -60 C 60 -86 150 -70 150 -10
+                 L 150 60 C 90 36 30 44 0 66 C -30 44 -90 36 -150 60 Z"
+              fill="#4a90d9"/>
+        <path d="M -138 -12 C -138 -62 -56 -74 0 -50 L 0 52 C -40 30 -100 26 -138 46 Z" fill="#ffffff" stroke="#dfe8ef" stroke-width="3"/>
+        <path d="M 138 -12 C 138 -62 56 -74 0 -50 L 0 52 C 40 30 100 26 138 46 Z" fill="#fdfbf4" stroke="#dfe8ef" stroke-width="3"/>
+        <line x1="0" y1="-50" x2="0" y2="52" stroke="#b9cbd8" stroke-width="4"/>
+        <!-- sol sayfa: kalp -->
+        <path d="M -70 -14 C -82 -32 -110 -20 -94 -2 L -70 18 L -46 -2 C -30 -20 -58 -32 -70 -14 Z" fill="#e94f4f"/>
+        <!-- sağ sayfa: yıldız -->
+        <path class="bookstar" d="M 70 -26 L 78 -6 L 100 -6 L 82 8 L 89 30 L 70 17 L 51 30 L 58 8 L 40 -6 L 62 -6 Z" fill="#f9c74f" stroke="#f0913a" stroke-width="3" stroke-linejoin="round"/>
+        <!-- sayfa çizgileri -->
+        <g stroke="#cddbe6" stroke-width="3" stroke-linecap="round">
+          <line x1="-116" y1="26" x2="-34" y2="16"/>
+          <line x1="34" y1="40" x2="116" y2="34"/>
+        </g>
+      </g>
+
+      <!-- kitaba uçan harfler (varış noktasında konumlanır, animasyon uzaktan getirir) -->
+      <g text-anchor="middle" font-weight="bold" font-family="inherit"
+         stroke="#ffffff" stroke-width="6" paint-order="stroke" stroke-linejoin="round">
+        <text class="flyletter fl1" x="140" y="390" font-size="60" fill="#e94f4f">A</text>
+        <text class="flyletter fl2" x="262" y="380" font-size="60" fill="#5cb85c">Ç</text>
+        <text class="flyletter fl3" x="200" y="368" font-size="60" fill="#9b59b6">Ğ</text>
+      </g>
+
+      <!-- tepede küçük güneş ve bulut -->
+      <circle cx="340" cy="70" r="34" fill="#f9c74f" stroke="#f0913a" stroke-width="4"/>
+      <g fill="#fff" stroke="#bcd7ee" stroke-width="4">
+        <ellipse cx="80" cy="90" rx="40" ry="20"/>
+        <ellipse cx="112" cy="78" rx="30" ry="17"/>
+      </g>
+    </svg>
+  </section>
+
+  <!-- ================= SAHNE 4 : Kalem "Rümeysa" yazıyor ================= -->
+  <section class="scene" id="scene4">
+    <svg viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <rect width="400" height="600" fill="#fffdf2"/>
+      <!-- defter çizgileri -->
+      <g stroke="#cfe0ee" stroke-width="3">
+        <line x1="0" y1="150" x2="400" y2="150"/>
+        <line x1="0" y1="230" x2="400" y2="230"/>
+        <line x1="0" y1="310" x2="400" y2="310"/>
+        <line x1="0" y1="390" x2="400" y2="390"/>
+        <line x1="0" y1="470" x2="400" y2="470"/>
+      </g>
+      <line x1="46" y1="0" x2="46" y2="600" stroke="#f2b8b8" stroke-width="3"/>
+
+      <!-- yazılan isim -->
+      <g font-weight="bold" font-family="inherit" font-size="52" fill="#4a90d9">
+        <text class="wletter w1" x="64"  y="296">R</text>
+        <text class="wletter w2" x="106" y="296" fill="#e94f4f">ü</text>
+        <text class="wletter w3" x="142" y="296" fill="#5cb85c">m</text>
+        <text class="wletter w4" x="196" y="296" fill="#9b59b6">e</text>
+        <text class="wletter w5" x="230" y="296" fill="#f0913a">y</text>
+        <text class="wletter w6" x="264" y="296" fill="#e87ab0">s</text>
+        <text class="wletter w7" x="296" y="296" fill="#4a90d9">a</text>
+      </g>
+
+      <!-- kalem -->
+      <g class="pencil">
+        <g transform="translate(30,300) rotate(-40)">
+          <rect x="14" y="-16" width="120" height="32" rx="6" fill="#f9c74f" stroke="#e0a52e" stroke-width="3"/>
+          <path d="M 14 -16 L -16 0 L 14 16 Z" fill="#f6d3ae" stroke="#e0a52e" stroke-width="3"/>
+          <path d="M -4 -6 L -16 0 L -4 6 Z" fill="#5a3a2a"/>
+          <rect x="134" y="-16" width="16" height="32" rx="5" fill="#e87ab0" stroke="#c95c92" stroke-width="3"/>
+        </g>
+      </g>
+
+      <!-- yıldız pırıltıları -->
+      <g fill="#f9c74f" stroke="#f0913a" stroke-width="2" stroke-linejoin="round">
+        <path class="sparkle" d="M 330 200 l 5 12 13 0 -10 8 4 13 -12 -8 -12 8 4 -13 -10 -8 13 0 Z"/>
+        <path class="sparkle" style="animation-delay:7.4s" d="M 90 200 l 5 12 13 0 -10 8 4 13 -12 -8 -12 8 4 -13 -10 -8 13 0 Z"/>
+      </g>
+    </svg>
+  </section>
+
+  <!-- ================= SAHNE 5 : Kutlama ve SON ================= -->
+  <section class="scene" id="scene5">
+    <svg viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <rect width="400" height="600" fill="#fdeeb0"/>
+      <rect y="440" width="400" height="160" fill="#cfe6a2"/>
+      <ellipse cx="90"  cy="450" rx="150" ry="45" fill="#bcdc8e"/>
+      <ellipse cx="330" cy="460" rx="160" ry="50" fill="#c6e29a"/>
+
+      <!-- güneş -->
+      <g transform="translate(200,120)">
+        <circle r="48" fill="#f9c74f" stroke="#f0913a" stroke-width="5"/>
+        <circle cx="-16" cy="-8" r="6" fill="#5a3a2a"/>
+        <circle cx="16"  cy="-8" r="6" fill="#5a3a2a"/>
+        <path d="M -18 12 Q 0 30 18 12" fill="none" stroke="#5a3a2a" stroke-width="5" stroke-linecap="round"/>
+      </g>
+
+      <!-- açan çiçekler (dış g konumlar, iç g ölçek animasyonu yapar) -->
+      <g transform="translate(70,470)"><g class="bloom b1">
+        <line x1="0" y1="0" x2="0" y2="-56" stroke="#5cb85c" stroke-width="7" stroke-linecap="round"/>
+        <g transform="translate(0,-70)">
+          <g fill="#e87ab0"><circle cx="0" cy="-16" r="12"/><circle cx="15" cy="-5" r="12"/><circle cx="9" cy="13" r="12"/><circle cx="-9" cy="13" r="12"/><circle cx="-15" cy="-5" r="12"/></g>
+          <circle r="10" fill="#f9c74f"/>
+        </g>
+      </g></g>
+      <g transform="translate(160,500)"><g class="bloom b2">
+        <line x1="0" y1="0" x2="0" y2="-44" stroke="#5cb85c" stroke-width="6" stroke-linecap="round"/>
+        <path transform="translate(0,-62)" d="M -16 12 C -22 -8 -10 -20 0 -22 C 10 -20 22 -8 16 12 Q 0 22 -16 12 Z" fill="#9b59b6"/>
+      </g></g>
+      <g transform="translate(250,492)"><g class="bloom b3">
+        <line x1="0" y1="0" x2="0" y2="-50" stroke="#5cb85c" stroke-width="6" stroke-linecap="round"/>
+        <g transform="translate(0,-64)">
+          <g fill="#f0913a"><circle cx="0" cy="-14" r="11"/><circle cx="13" cy="-4" r="11"/><circle cx="8" cy="11" r="11"/><circle cx="-8" cy="11" r="11"/><circle cx="-13" cy="-4" r="11"/></g>
+          <circle r="9" fill="#4a90d9"/>
+        </g>
+      </g></g>
+      <g transform="translate(340,478)"><g class="bloom b4">
+        <line x1="0" y1="0" x2="0" y2="-52" stroke="#5cb85c" stroke-width="6" stroke-linecap="round"/>
+        <g transform="translate(0,-66)">
+          <g fill="#e94f4f"><circle cx="0" cy="-14" r="11"/><circle cx="13" cy="-4" r="11"/><circle cx="8" cy="11" r="11"/><circle cx="-8" cy="11" r="11"/><circle cx="-13" cy="-4" r="11"/></g>
+          <circle r="9" fill="#f9c74f"/>
+        </g>
+      </g></g>
+
+      <!-- konfeti: harfler ve şekiller yağıyor -->
+      <g text-anchor="middle" font-weight="bold" font-family="inherit" font-size="34"
+         stroke="#ffffff" stroke-width="5" paint-order="stroke" stroke-linejoin="round">
+        <text class="confetti"      x="60"  y="0" fill="#e94f4f">A</text>
+        <text class="confetti c-d1" x="150" y="0" fill="#5cb85c">B</text>
+        <text class="confetti c-d2" x="240" y="0" fill="#9b59b6">Ç</text>
+        <text class="confetti c-d3" x="320" y="0" fill="#f0913a">Ğ</text>
+        <text class="confetti c-d4" x="105" y="0" fill="#4a90d9">C</text>
+      </g>
+      <g>
+        <path class="confetti c-d2" transform="translate(200,0)" d="M0 4 C -5 -4 -14 1 -7 9 L 0 15 L 7 9 C 14 1 5 -4 0 4 Z" fill="#e87ab0"/>
+        <path class="confetti c-d4" transform="translate(285,0)" d="M 0 -10 l 3 7 8 0 -6 5 2 8 -7 -5 -7 5 2 -8 -6 -5 8 0 Z" fill="#f9c74f" stroke="#f0913a" stroke-width="2"/>
+      </g>
+
+      <!-- kutlama yazısı -->
+      <g text-anchor="middle" font-weight="bold" font-family="inherit"
+         stroke="#ffffff" stroke-width="7" paint-order="stroke" stroke-linejoin="round">
+        <text class="s5-title" x="200" y="250" font-size="34" fill="#e94f4f">Aferin Rümeysa!</text>
+      </g>
+
+      <!-- SON rozeti -->
+      <g class="sonbadge">
+        <circle cx="200" cy="340" r="58" fill="#9b59b6" stroke="#fff" stroke-width="6"/>
+        <text x="200" y="358" text-anchor="middle" font-weight="bold" font-family="inherit" font-size="46" fill="#fff">SON</text>
+      </g>
+    </svg>
+  </section>
+
+  <!-- alt yazı -->
+  <div id="subtitle"></div>
+
+  <!-- başlat / tekrar ekranı -->
+  <div id="overlay">
+    <h1><span class="c1">Rümeysa</span><br><span class="c2">Okuma Yazma</span><br><span class="c3">Öğreniyor</span></h1>
+    <button id="playBtn">&#9654;&nbsp; Filmi Başlat</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var scenes = {
+    1: document.getElementById("scene1"),
+    2: document.getElementById("scene2"),
+    3: document.getElementById("scene3"),
+    4: document.getElementById("scene4"),
+    5: document.getElementById("scene5")
+  };
+  var subtitle = document.getElementById("subtitle");
+  var overlay  = document.getElementById("overlay");
+  var playBtn  = document.getElementById("playBtn");
+
+  /* film şeridi: sahne no, alt yazı, süre (ms) */
+  var timeline = [
+    {scene:1, text:"Güneşli bir sabahtı. Güneş, gökyüzüne gülümseyerek yükseldi.", dur:6500},
+    {scene:1, text:"Bugün Rümeysa için çok özel bir gündü...", dur:4000},
+    {scene:2, text:"Annesi, minik Rümeysa'yı kucağına aldı.", dur:4500},
+    {scene:2, text:"\"Bak Rümeysa! Bunlar harfler: A, B, C, Ç, Ğ!\"", dur:5500},
+    {scene:2, text:"Rümeysa kıkırdadı; harfler etraflarında dans ediyordu.", dur:4500},
+    {scene:3, text:"Harfler uçtu, uçtu... ve kitabın sayfalarına kondu.", dur:5000},
+    {scene:3, text:"Kitap ışıl ışıl parladı!", dur:3500},
+    {scene:4, text:"Sonra sarı kalem deftere geldi ve yazmaya başladı...", dur:3500},
+    {scene:4, text:"R - ü - m - e - y - s - a... Rümeysa!", dur:6000},
+    {scene:5, text:"Çiçekler açtı, harfler sevinçle yağdı: Aferin Rümeysa!", dur:5000},
+    {scene:5, text:"Rümeysa okuma yazma öğreniyor... Bu daha başlangıç!", dur:5000}
+  ];
+
+  var step = -1;
+  var timer = null;
+  var current = null;
+
+  function showScene(n){
+    if (current === n) return;
+    Object.keys(scenes).forEach(function(k){
+      scenes[k].classList.toggle("active", Number(k) === n);
+    });
+    current = n;
+  }
+
+  function showSubtitle(text){
+    subtitle.classList.remove("show");
+    setTimeout(function(){
+      subtitle.textContent = text;
+      subtitle.classList.add("show");
+    }, 350);
+  }
+
+  function next(){
+    step++;
+    if (step >= timeline.length){ finish(); return; }
+    var t = timeline[step];
+    showScene(t.scene);
+    showSubtitle(t.text);
+    timer = setTimeout(next, t.dur);
+  }
+
+  function finish(){
+    subtitle.classList.remove("show");
+    playBtn.innerHTML = "&#8635;&nbsp; Tekrar Oynat";
+    overlay.classList.remove("hidden");
+  }
+
+  function start(){
+    clearTimeout(timer);
+    step = -1;
+    current = null;
+    Object.keys(scenes).forEach(function(k){ scenes[k].classList.remove("active"); });
+    overlay.classList.add("hidden");
+    /* sınıflar sıfırlansın diye kısa bir an bekle, sonra filmi başlat */
+    timer = setTimeout(next, 60);
+  }
+
+  playBtn.addEventListener("click", start);
+})();
+</script>
+</body>
+</html>
